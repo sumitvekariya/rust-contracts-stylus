@@ -231,7 +231,14 @@ impl IErc20Wrapper for Erc20Wrapper {
     type Error = Error;
 
     fn decimals(&self) -> U8 {
-        self.underlying_decimals.get()
+        // First try to get decimals from the underlying token
+        let underlying_token = Erc20Interface::new(self.underlying());
+        match underlying_token.decimals(Call::new_in(self)) {
+            // If successful, return the underlying token's decimals
+            Ok(decimals) => decimals,
+            // If the underlying token doesn't support decimals, fall back to stored value
+            Err(_) => self.underlying_decimals.get(),
+        }
     }
 
     fn underlying(&self) -> Address {
